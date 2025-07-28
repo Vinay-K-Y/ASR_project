@@ -1,11 +1,9 @@
-# vad.py
 import torch
 
 class SileroVAD:
     def __init__(self):
-        print("⏳ Loading Silero VAD...")
+        print(" Loading Silero VAD...")
 
-        # Load the model and unpack the utils tuple
         model, utils = torch.hub.load(
             repo_or_dir='snakers4/silero-vad',
             model='silero_vad',
@@ -16,14 +14,18 @@ class SileroVAD:
         self.get_speech_ts, self.save_audio, self.read_audio, self.VADIterator, self.collect_chunks = utils
         self.sample_rate = 16000
 
-        print("✅ Silero VAD Loaded.")
+        print(" Silero VAD Loaded.")
 
-    def is_speech(self, audio_tensor):
+    def is_speech(self, audio_tensor, threshold=0.5):
         """
-        Returns True if speech is detected in the audio tensor.
+        This is a more direct and responsive method for real-time VAD.
+        It returns the speech probability of the LAST frame in the audio tensor.
         """
-        speech_timestamps = self.get_speech_ts(audio_tensor, self.model, sampling_rate=self.sample_rate)
-        return len(speech_timestamps) > 0
+        if not isinstance(audio_tensor, torch.Tensor):
+            audio_tensor = torch.from_numpy(audio_tensor)
 
+        speech_prob = self.model(audio_tensor, self.sample_rate).item()
+
+        return speech_prob > threshold
 
 
